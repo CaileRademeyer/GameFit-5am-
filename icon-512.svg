@@ -1,0 +1,7 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" fill="#0a0c13"/>
+  <circle cx="256" cy="256" r="200" fill="none" stroke="#d32f2f" stroke-width="20"/>
+  <path d="M256 56 L256 456 M56 256 L456 256" stroke="#d32f2f" stroke-width="16"/>
+  <circle cx="256" cy="256" r="60" fill="#d32f2f"/>
+  <text x="256" y="275" text-anchor="middle" fill="white" font-family="Arial" font-size="48" font-weight="bold">GF</text>
+</svg>

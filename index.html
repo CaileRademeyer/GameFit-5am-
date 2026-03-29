@@ -3,10 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="GameFit 5am Club - Rise early, train smart, build power. Explore workouts, muscles, rugby drills, and fitness circuits." />
+  <meta name="theme-color" content="#0a0c13" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="GameFit 5am Club" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
   <title>GameFit 5am Club</title>
-  <link rel="stylesheet" href="styel.css" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <!-- Loading Screen -->
+  <div id="loading-screen" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(120deg, #05111f, #0a0918 40%, #0f1225); display: flex; align-items: center; justify-content: center; z-index: 9999; transition: opacity 0.3s ease;">
+    <div style="text-align: center; color: white;">
+      <div style="width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid #d32f2f; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
+      <h2 style="margin: 0; font-weight: 700;">GameFit 5am Club</h2>
+      <p style="margin: 10px 0 0; opacity: 0.8;">Loading your fitness journey...</p>
+    </div>
+  </div>
+
   <header class="hero" style="display: none;">
     <div class="hero-content">
       <h1>GameFit 5am Club</h1>
@@ -353,8 +369,76 @@
   </footer>
 
   <script>
+    // Register service worker for PWA functionality
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(registration => console.log('SW registered'))
+          .catch(error => console.log('SW registration failed'));
+      });
+    }
+
+    // PWA install prompt
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      // Show install button or banner
+      showInstallBanner();
+    });
+
+    function showInstallBanner() {
+      const banner = document.createElement('div');
+      banner.id = 'install-banner';
+      banner.innerHTML = `
+        <div style="position: fixed; bottom: 20px; left: 20px; right: 20px; background: rgba(211, 47, 47, 0.9); color: white; padding: 16px; border-radius: 12px; text-align: center; z-index: 1000; backdrop-filter: blur(10px);">
+          <p style="margin: 0 0 12px 0; font-weight: 600;">Install GameFit 5am Club</p>
+          <button onclick="installApp()" style="background: white; color: #d32f2f; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; margin-right: 8px;">Install</button>
+          <button onclick="dismissBanner()" style="background: transparent; color: white; border: 1px solid white; padding: 8px 16px; border-radius: 6px;">Later</button>
+        </div>
+      `;
+      document.body.appendChild(banner);
+    }
+
+    function installApp() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            console.log('User accepted the install prompt');
+          }
+          deferredPrompt = null;
+          dismissBanner();
+        });
+      }
+    }
+
+    function dismissBanner() {
+      const banner = document.getElementById('install-banner');
+      if (banner) banner.remove();
+    }
+
+    // Offline/online status
+    function updateOnlineStatus() {
+      const status = navigator.onLine ? 'online' : 'offline';
+      console.log('Connection status:', status);
+      // Could add visual indicator here
+    }
+
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+
     // Check login status on page load
     document.addEventListener('DOMContentLoaded', function() {
+      // Hide loading screen after a short delay
+      setTimeout(() => {
+        const loading = document.getElementById('loading-screen');
+        if (loading) {
+          loading.style.opacity = '0';
+          setTimeout(() => loading.style.display = 'none', 300);
+        }
+      }, 1500);
+
       if (isLoggedIn()) {
         showMainContent();
       } else {
