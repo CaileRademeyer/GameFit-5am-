@@ -91,6 +91,7 @@
     <section class="top-rules">
       <p class="blue-text strong-rule">Each workout is 40-60 minutes, with a max of 12 sets and at least 8 reps per working set, 60-90 seconds rest between sets.</p>
       <div class="user-controls">
+        <button class="profile-btn" onclick="showProfilePage()">📊 My Profile & Progress</button>
         <button class="logout-btn" onclick="handleLogout()">Logout</button>
       </div>
     </section>
@@ -300,6 +301,18 @@
           <div class="workout-item">Woodchoppers <span class="sets-reps">3x12/side</span></div>
         </div>
       </div>
+      <div class="card">
+        <h3>Back & Tricep Strength</h3>
+        <p class="workout-description">Build upper body strength and definition with targeted back and tricep exercises.</p>
+        <div class="workout-list">
+          <div class="workout-item">Pull-ups/Assisted Pull-ups <span class="sets-reps">3x6-10</span></div>
+          <div class="workout-item">Bent-Over Rows <span class="sets-reps">3x10-12</span></div>
+          <div class="workout-item">Single-Arm Dumbbell Row <span class="sets-reps">3x10/side</span></div>
+          <div class="workout-item">Tricep Dips <span class="sets-reps">3x10-12</span></div>
+          <div class="workout-item">Tricep Rope Pushdowns <span class="sets-reps">3x12-15</span></div>
+          <div class="workout-item">Lat Pulldowns <span class="sets-reps">3x12-15</span></div>
+        </div>
+      </div>
     </section>
 
     <section id="boxing" class="card-grid">
@@ -363,6 +376,92 @@
       </div>
     </section>
   </main>
+
+  <!-- Profile Page -->
+  <div id="profile-page" class="profile-section" style="display: none;">
+    <div class="profile-container">
+      <div class="profile-header">
+        <h1>Your Fitness Profile</h1>
+        <button class="back-btn" onclick="hideProfilePage()">← Back to Workouts</button>
+      </div>
+
+      <!-- Stats Section -->
+      <section class="stats-section">
+        <h2>Your Progress</h2>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <h3>Total Workouts</h3>
+            <p class="stat-number" id="total-workouts">0</p>
+          </div>
+          <div class="stat-card">
+            <h3>This Week</h3>
+            <p class="stat-number" id="week-workouts">0</p>
+          </div>
+          <div class="stat-card">
+            <h3>Total Hours</h3>
+            <p class="stat-number" id="total-hours">0</p>
+          </div>
+          <div class="stat-card">
+            <h3>Streak (Days)</h3>
+            <p class="stat-number" id="streak-days">0</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Workout History -->
+      <section class="history-section">
+        <h2>Workout History</h2>
+        <div id="workout-history" class="history-list">
+          <p style="text-align: center; color: #a8b7e4; padding: 30px 20px;">No workouts logged yet. Complete a workout to see your progress!</p>
+        </div>
+      </section>
+
+      <!-- Export Stats -->
+      <section class="export-section">
+        <button class="export-btn" onclick="exportProgressData()">📥 Export Progress</button>
+        <button class="export-btn clear-btn" onclick="clearAllProgress()">🗑️ Clear History</button>
+      </section>
+    </div>
+  </div>
+
+  <!-- Workout Logging Modal -->
+  <div id="workout-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Log Your Workout</h2>
+        <button class="close-modal" onclick="closeWorkoutModal()">✕</button>
+      </div>
+      <form id="workout-form" onsubmit="saveWorkoutProgress(event)">
+        <div class="form-group">
+          <label for="workout-name">Workout Type</label>
+          <input type="text" id="workout-name" placeholder="e.g., Strength - Squats & Deadlifts" required>
+        </div>
+        <div class="form-group">
+          <label for="workout-duration">Duration (minutes)</label>
+          <input type="number" id="workout-duration" min="1" max="180" placeholder="e.g., 45" required>
+        </div>
+        <div class="form-group">
+          <label for="workout-intensity">Intensity Level</label>
+          <select id="workout-intensity" required>
+            <option value="">Select Intensity</option>
+            <option value="Light">Light</option>
+            <option value="Moderate">Moderate</option>
+            <option value="High">High</option>
+            <option value="Max">Max</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="workout-notes">Notes (optional)</label>
+          <textarea id="workout-notes" placeholder="How did you feel? Any personal records? Injuries?"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="workout-date">Date</label>
+          <input type="date" id="workout-date" required>
+        </div>
+        <button type="submit" class="btn submit-btn">Save Workout</button>
+      </form>
+    </div>
+  </div>
 
   <footer>
     <p>GameFit 5am Club © 2026 | Get in early, get in strong</p>
@@ -520,6 +619,277 @@
       document.querySelector('.hero').style.display = 'block';
       document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' });
     }
+
+    // ==================== PROGRESS TRACKING FUNCTIONS ====================
+
+    // Profile Page Management
+    function showProfilePage() {
+      document.querySelector('main').style.display = 'none';
+      document.querySelector('.hero').style.display = 'none';
+      document.getElementById('profile-page').style.display = 'block';
+      loadProfileStats();
+    }
+
+    function hideProfilePage() {
+      document.getElementById('profile-page').style.display = 'none';
+      document.querySelector('main').style.display = 'block';
+      document.querySelector('.hero').style.display = 'block';
+    }
+
+    // Workout Modal Management
+    function openWorkoutModal(workoutName = '') {
+      const modal = document.getElementById('workout-modal');
+      modal.style.display = 'flex';
+      if (workoutName) {
+        document.getElementById('workout-name').value = workoutName;
+      }
+      // Set today's date as default
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('workout-date').value = today;
+    }
+
+    function closeWorkoutModal() {
+      const modal = document.getElementById('workout-modal');
+      modal.style.display = 'none';
+      document.getElementById('workout-form').reset();
+    }
+
+    // Save Workout Progress
+    function saveWorkoutProgress(event) {
+      event.preventDefault();
+      
+      const workoutName = document.getElementById('workout-name').value;
+      const duration = parseInt(document.getElementById('workout-duration').value);
+      const intensity = document.getElementById('workout-intensity').value;
+      const notes = document.getElementById('workout-notes').value;
+      const date = document.getElementById('workout-date').value;
+
+      if (!workoutName || !duration || !intensity || !date) {
+        alert('Please fill out all required fields');
+        return;
+      }
+
+      // Create workout object
+      const workout = {
+        id: Date.now(),
+        name: workoutName,
+        duration: duration,
+        intensity: intensity,
+        notes: notes,
+        date: date,
+        completed: new Date().toISOString()
+      };
+
+      // Get existing workouts from localStorage
+      let workouts = JSON.parse(localStorage.getItem('gamefit_workouts')) || [];
+      
+      // Add new workout
+      workouts.push(workout);
+      
+      // Save back to localStorage
+      localStorage.setItem('gamefit_workouts', JSON.stringify(workouts));
+
+      // Show success message
+      alert('🎉 Workout logged successfully! Keep up the great work!');
+      
+      // Close modal and refresh profile
+      closeWorkoutModal();
+      if (document.getElementById('profile-page').style.display !== 'none') {
+        loadProfileStats();
+      }
+    }
+
+    // Load Profile Statistics
+    function loadProfileStats() {
+      const workouts = JSON.parse(localStorage.getItem('gamefit_workouts')) || [];
+      
+      if (workouts.length === 0) {
+        document.getElementById('workout-history').innerHTML = 
+          '<p style="text-align: center; color: #a8b7e4; padding: 30px 20px;">No workouts logged yet. Complete a workout to see your progress!</p>';
+      } else {
+        // Display workout history
+        displayWorkoutHistory(workouts);
+      }
+
+      // Calculate and display stats
+      updateStats(workouts);
+    }
+
+    // Update Statistics Display
+    function updateStats(workouts) {
+      if (!workouts || workouts.length === 0) {
+        document.getElementById('total-workouts').textContent = '0';
+        document.getElementById('week-workouts').textContent = '0';
+        document.getElementById('total-hours').textContent = '0';
+        document.getElementById('streak-days').textContent = '0';
+        return;
+      }
+
+      // Total workouts
+      const totalWorkouts = workouts.length;
+      document.getElementById('total-workouts').textContent = totalWorkouts;
+
+      // Workouts this week
+      const today = new Date();
+      const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const weekWorkouts = workouts.filter(w => new Date(w.date) >= weekAgo).length;
+      document.getElementById('week-workouts').textContent = weekWorkouts;
+
+      // Total hours
+      const totalMinutes = workouts.reduce((sum, w) => sum + (w.duration || 0), 0);
+      const totalHours = (totalMinutes / 60).toFixed(1);
+      document.getElementById('total-hours').textContent = totalHours;
+
+      // Streak calculation
+      const streak = calculateStreak(workouts);
+      document.getElementById('streak-days').textContent = streak;
+    }
+
+    // Calculate workout streak
+    function calculateStreak(workouts) {
+      if (!workouts || workouts.length === 0) return 0;
+
+      // Sort workouts by date (newest first)
+      const sorted = [...workouts].sort((a, b) => new Date(b.date) - new Date(a.date));
+      
+      let streak = 0;
+      let currentDate = new Date();
+      currentDate.setHours(0, 0, 0, 0);
+
+      for (const workout of sorted) {
+        const workoutDate = new Date(workout.date);
+        workoutDate.setHours(0, 0, 0, 0);
+
+        const diffTime = currentDate - workoutDate;
+        const diffDays = diffTime / (1000 * 60 * 60 * 24);
+
+        if (diffDays === streak) {
+          streak++;
+          currentDate = new Date(workoutDate);
+        } else {
+          break;
+        }
+      }
+
+      return streak;
+    }
+
+    // Display Workout History
+    function displayWorkoutHistory(workouts) {
+      const historyContainer = document.getElementById('workout-history');
+      
+      // Sort by date (newest first)
+      const sorted = [...workouts].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      let html = '';
+      sorted.forEach(workout => {
+        const date = new Date(workout.date);
+        const formattedDate = date.toLocaleDateString('en-US', { 
+          weekday: 'short', 
+          year: 'numeric', 
+          month: 'short', 
+          day: 'numeric' 
+        });
+
+        const intensityColor = {
+          'Light': '#74b8ff',
+          'Moderate': '#2196F3',
+          'High': '#ff9800',
+          'Max': '#d32f2f'
+        }[workout.intensity] || '#74b8ff';
+
+        html += `
+          <div class="history-item">
+            <div class="history-item-header">
+              <div class="history-item-title">${workout.name}</div>
+              <div class="history-item-date">${formattedDate}</div>
+            </div>
+            <div class="history-item-details">
+              <div class="detail-box">
+                <div class="detail-label">Duration</div>
+                <div class="detail-value">${workout.duration}m</div>
+              </div>
+              <div class="detail-box">
+                <div class="detail-label">Intensity</div>
+                <div class="detail-value" style="color: ${intensityColor};">${workout.intensity}</div>
+              </div>
+            </div>
+            ${workout.notes ? `<div class="history-notes"><strong>Notes:</strong> ${workout.notes}</div>` : ''}
+          </div>
+        `;
+      });
+
+      historyContainer.innerHTML = html;
+    }
+
+    // Export Progress Data
+    function exportProgressData() {
+      const workouts = JSON.parse(localStorage.getItem('gamefit_workouts')) || [];
+      
+      if (workouts.length === 0) {
+        alert('No workouts to export yet!');
+        return;
+      }
+
+      // Create CSV content
+      let csvContent = 'Workout Name,Date,Duration (min),Intensity,Notes\n';
+      workouts.forEach(w => {
+        const notes = w.notes ? w.notes.replace(/,/g, ';') : '';
+        csvContent += `"${w.name}","${w.date}",${w.duration},"${w.intensity}","${notes}"\n`;
+      });
+
+      // Create blob and download
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `gamefit-progress-${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    }
+
+    // Clear All Progress
+    function clearAllProgress() {
+      if (confirm('⚠️ Are you sure you want to delete all workout history? This cannot be undone.')) {
+        localStorage.removeItem('gamefit_workouts');
+        alert('All workout history has been cleared.');
+        loadProfileStats();
+      }
+    }
+
+    // Add Complete Workout buttons to cards
+    function addCompleteWorkoutButtons() {
+      const cards = document.querySelectorAll('.card');
+      cards.forEach((card, index) => {
+        // Only add if button doesn't already exist
+        if (!card.querySelector('.complete-workout-btn')) {
+          const workoutTitle = card.querySelector('h3').textContent;
+          const btn = document.createElement('button');
+          btn.className = 'complete-workout-btn';
+          btn.textContent = '✓ Complete This Workout';
+          btn.onclick = (e) => {
+            e.preventDefault();
+            openWorkoutModal(workoutTitle);
+          };
+          card.appendChild(btn);
+        }
+      });
+    }
+
+    // Initialize complete workout buttons when navigating
+    const originalSelectWorkout = window.selectWorkout;
+    window.selectWorkout = function(sectionId) {
+      originalSelectWorkout(sectionId);
+      setTimeout(() => addCompleteWorkoutButtons(), 100);
+    };
+
+    // Add buttons initially
+    document.addEventListener('DOMContentLoaded', function() {
+      // Existing code...
+      setTimeout(() => {
+        addCompleteWorkoutButtons();
+      }, 2000);
+    });
   </script>
 </body>
 </html>
